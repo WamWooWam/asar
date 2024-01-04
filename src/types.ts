@@ -4,17 +4,14 @@ export interface UnpackedFiles {
   [key: string]: UnpackedFiles | FileData
 }
 
-export type UnpackedDirectory =  {
-  files: { [property: string]:  FileData | UnpackedDirectory }
+export type UnpackedDirectory = {
+  files: { [property: string]: FileData | UnpackedDirectory }
 }
 
-export interface FileMetadata {
-  offset?: number
-  size?: number
-}
+export type FileMetadata = [offset: number, size: number]
 
-export type DirectoryMetadata =  {
-  files: { [property: string]:  FileMetadata | DirectoryMetadata }
+export type DirectoryMetadata = {
+  files: { [property: string]: FileMetadata | DirectoryMetadata }
 }
 
 export type Metadata = DirectoryMetadata | FileMetadata

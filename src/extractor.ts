@@ -5,7 +5,7 @@ import { Decoder } from '@msgpack/msgpack'
 
 import { isDirectoryMetadata } from './utils'
 
-export type FullFileMetadata = Omit<FileMetadata, 'offset'> & { offset: number, path: string, fileOffset: number }
+export type FullFileMetadata = { size: number, offset: number, path: string, fileOffset: number }
 
 export interface ListPackageMetadataReturn {
   [key: string]: FullFileMetadata | ListPackageMetadataReturn
@@ -30,9 +30,9 @@ const flatListChildMetadata = ({ basePath, metadata, filesOffset }: ListChildMet
         ? flatListChildMetadata({ basePath: path.join(basePath, key), metadata: value, filesOffset })
         : ({
           path: path.join(basePath, key),
-          offset: Number((metadata.files[key] as FileMetadata).offset),
-          size: (metadata.files[key] as FileMetadata).size,
-          fileOffset: filesOffset + 8 + Number((metadata.files[key] as FileMetadata).offset)
+          offset: Number((metadata.files[key] as FileMetadata)[0]),
+          size: (metadata.files[key] as FileMetadata)[1],
+          fileOffset: filesOffset + 8 + Number((metadata.files[key] as FileMetadata)[0])
         })
     )
 
@@ -51,9 +51,9 @@ const listChildsNestedMetadata = <T extends DirectoryMetadata | FileMetadata>({ 
     ) as ListChildsNestedMetadataReturnType<T>
     : ({
       path: basePath,
-      offset: Number(metadata.offset),
-      size: metadata.size,
-      fileOffset: filesOffset + 8 + metadata.offset!
+      offset: Number(metadata[0]),
+      size: Number(metadata[1]),
+      fileOffset: filesOffset + 8 + (metadata[0]!)!
     }) as unknown as ListChildsNestedMetadataReturnType<T>
 
 const listChilds = <T extends boolean>(
@@ -76,7 +76,7 @@ const searchNodeFromDirectory = (header: Metadata, p: string) => {
 }
 
 const searchNodeFromPath = (header: DirectoryMetadata, p: string) => {
-  if(typeof p !== 'string') return undefined;
+  if (typeof p !== 'string') return undefined;
 
   p = p.replace(/^\//, '')
   if (!p) { return header }
@@ -86,7 +86,7 @@ const searchNodeFromPath = (header: DirectoryMetadata, p: string) => {
     node.files = {}
   }
   if (node.files[name] === null) {
-    node.files[name] = {}
+    node.files[name] = [0, 0]
   }
   return node.files[name]
 }
@@ -118,7 +118,7 @@ export const extractFile = async (archive: FileData, pathname: string) => {
   // const header = JSON.parse(headerString)
 
   const header = decoder.decode(headerBuffer) as DirectoryMetadata
-  const { offset, size: payloadSize } = <FileMetadata>searchNodeFromPath(header, pathname)
+  const [offset, payloadSize] = <FileMetadata>searchNodeFromPath(header, pathname)
   // console.log('headerSize', size, headerSize)
   // console.log('offset', offset, payloadSize)
   return buffer.slice(size + Number(offset) + 8, size + Number(offset) + payloadSize! + 8)

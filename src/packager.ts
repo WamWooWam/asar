@@ -1,5 +1,5 @@
 
-import type { UnpackedFiles, UnpackedDirectory, FileMetadata, DirectoryMetadata } from './types'
+import type { UnpackedFiles, UnpackedDirectory, FileMetadata, DirectoryMetadata, FileData } from './types'
 
 import { Path, Buffer } from 'filer'
 import { Encoder } from '@msgpack/msgpack'
@@ -22,34 +22,36 @@ const makeFlatTree = (files: UnpackedFiles): UnpackedFiles => {
     }
     currDir[filename] = val
   }
+
   return <UnpackedDirectory>tree
 }
 
-const makeHeaderTree = (files: UnpackedFiles): UnpackedDirectory =>
-  Object
-    .entries(files)
-    .reduce(({ files }, [key, value]) => ({
-      files: {
-        ...files,
-        [key]:
-          isDirectory(value)
-            ? makeHeaderTree(<UnpackedFiles>value)
-            : value
-      }
-    }), { files: {} })
+const makeHeaderTree = (files: UnpackedFiles): UnpackedDirectory => {
+  const tree: UnpackedDirectory = { files: {} }
+  for (const [key, value] of Object.entries(files)) {
+    if (isDirectory(value)) {
+      tree.files[key] = makeHeaderTree(<UnpackedFiles>value)
+    } else {
+      tree.files[key] = <FileData>value
+    }
+  }
 
-const makeSizeTree = (tree: UnpackedDirectory): DirectoryMetadata =>
-  Object
-    .entries(tree.files)
-    .reduce(({ files }, [key, value]) => ({
-      files: {
-        ...files,
-        [key]:
-          isDirectoryMetadata(value as any)
-            ? makeSizeTree(<UnpackedDirectory>value)
-            : { size: (<any>value)?.length }
-      }
-    }), { files: {} })
+  return tree
+}
+
+const makeSizeTree = (tree: UnpackedDirectory): DirectoryMetadata => {
+  let files: DirectoryMetadata = { files: {} }
+  for (const [key, value] of Object.entries(tree.files)) {
+    if (isDirectoryMetadata(value as any)) {
+      files.files[key] = makeSizeTree(<UnpackedDirectory>value)
+    } else {
+      // files.files[key] = { size: (<any>value)?.length }
+      files.files[key] = [0, (<any>value)?.length]
+    }
+  }
+
+  return files
+}
 
 const makeOffsetTree = (tree: DirectoryMetadata): DirectoryMetadata => {
   const makeInnerOffsetTree = (tree: DirectoryMetadata, offset: number): [DirectoryMetadata, number] => {
@@ -59,8 +61,9 @@ const makeOffsetTree = (tree: DirectoryMetadata): DirectoryMetadata => {
         tree.files[key] = newValue
         offset = newOffset
       } else {
-        tree.files[key] = { size: (<FileMetadata>value).size || 0, offset: offset }
-        offset += (<FileMetadata>value).size || 0
+        // tree.files[key] = { size: (<FileMetadata>value).size || 0, offset: offset }
+        tree.files[key] = [offset, (<FileMetadata>value)[1] || 0]
+        offset += (<FileMetadata>value)[1] || 0
       }
     }
 
