@@ -76,6 +76,8 @@ const searchNodeFromDirectory = (header: Metadata, p: string) => {
 }
 
 const searchNodeFromPath = (header: DirectoryMetadata, p: string) => {
+  if(typeof p !== 'string') return undefined;
+
   p = p.replace(/^\//, '')
   if (!p) { return header }
   const name = path.basename(p)
@@ -116,11 +118,9 @@ export const extractFile = async (archive: FileData, pathname: string) => {
   // const header = JSON.parse(headerString)
 
   const header = decoder.decode(headerBuffer) as DirectoryMetadata
-
-
   const { offset, size: payloadSize } = <FileMetadata>searchNodeFromPath(header, pathname)
-  console.log('headerSize', size, headerSize)
-  console.log('offset', offset, payloadSize)
+  // console.log('headerSize', size, headerSize)
+  // console.log('offset', offset, payloadSize)
   return buffer.slice(size + Number(offset) + 8, size + Number(offset) + payloadSize! + 8)
 }
 
@@ -192,6 +192,8 @@ export const extractAll =
   ): Promise<{ [key: string]: FileData } | extractPackageReturn> => {
     const buffer = await getArrayBuffer(archive)
     const { header } = await getHeader(buffer, { flat: options?.flat })
+
+    // console.log('header', header)
 
     if (options?.flat) {
       return Object.fromEntries(
