@@ -1,6 +1,6 @@
 import type { DirectoryMetadata, FileMetadata } from './types'
 
-export const isDirectory = (val: any) => !!val && typeof val === 'object'
+export const isDirectory = (val: any) => !!val && !(val instanceof ArrayBuffer || ('length' in val && typeof val.length === 'number')) && typeof val === 'object'
 
 export const isDirectoryMetadata =
   (val: DirectoryMetadata | FileMetadata): val is DirectoryMetadata =>

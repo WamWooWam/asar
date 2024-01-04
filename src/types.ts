@@ -9,7 +9,7 @@ export type UnpackedDirectory =  {
 }
 
 export interface FileMetadata {
-  offset?: string
+  offset?: number
   size?: number
 }
 

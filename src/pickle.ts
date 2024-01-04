@@ -1,4 +1,3 @@
-
 import { Buffer } from 'buffer'
 
 // sizeof(T).
@@ -26,46 +25,46 @@ class PickleIterator {
   readIndex: number
   endIndex: number
 
-  constructor (pickle: Pickle) {
+  constructor(pickle: Pickle) {
     this.payload = pickle.header
     this.payloadOffset = pickle.headerSize
     this.readIndex = 0
     this.endIndex = pickle.getPayloadSize()
   }
 
-  readBool () {
+  readBool() {
     return this.readInt() !== 0
   }
 
-  readInt () {
+  readInt() {
     return this.readBytes(SIZE_INT32, Buffer.prototype.readInt32LE)
   }
 
-  readUInt32 () {
+  readUInt32() {
     return this.readBytes(SIZE_UINT32, Buffer.prototype.readUInt32LE)
   }
 
-  readInt64 () {
+  readInt64() {
     throw new Error('Int64 not supported in the browser')
   }
 
-  readUInt64 () {
+  readUInt64() {
     throw new Error('UInt64 not supported in the browser')
   }
 
-  readFloat () {
+  readFloat() {
     return this.readBytes(SIZE_FLOAT, Buffer.prototype.readFloatLE)
   }
 
-  readDouble () {
+  readDouble() {
     return this.readBytes(SIZE_DOUBLE, Buffer.prototype.readDoubleLE)
   }
 
-  readString () {
+  readString() {
     return this.readBytes(this.readInt()).toString()
   }
 
-  readBytes (length: number, method?: Function) {
+  readBytes(length: number, method?: Function) {
     var readPayloadOffset = this.getReadPayloadOffsetAndAdvance(length)
     if (method != null) {
       return method.call(this.payload, readPayloadOffset, length)
@@ -74,7 +73,7 @@ class PickleIterator {
     }
   }
 
-  getReadPayloadOffsetAndAdvance (length: number) {
+  getReadPayloadOffsetAndAdvance(length: number) {
     if (length > this.endIndex - this.readIndex) {
       this.readIndex = this.endIndex
       throw new Error('Failed to read data with length of ' + length)
@@ -84,7 +83,7 @@ class PickleIterator {
     return readPayloadOffset
   }
 
-  advance (size: number) {
+  advance(size: number) {
     var alignedSize = alignInt(size, SIZE_UINT32)
     if (this.endIndex - this.readIndex < alignedSize) {
       this.readIndex = this.endIndex
@@ -117,7 +116,7 @@ export default class Pickle {
   capacityAfterHeader: number
   writeOffset: number
 
-  constructor (buffer?: Buffer) {
+  constructor(buffer?: Buffer) {
     if (buffer) {
       this.header = buffer
       this.headerSize = buffer.length - this.getPayloadSize()
@@ -130,10 +129,10 @@ export default class Pickle {
         this.headerSize = 0
       }
       if (this.headerSize === 0) {
-        this.header = new Buffer(0)
+        this.header = Buffer.alloc(0)
       }
     } else {
-      this.header = new Buffer(0)
+      this.header = Buffer.alloc(0)
       this.headerSize = SIZE_UINT32
       this.capacityAfterHeader = 0
       this.writeOffset = 0
@@ -142,43 +141,43 @@ export default class Pickle {
     }
   }
 
-  createIterator () {
+  createIterator() {
     return new PickleIterator(this)
   }
 
-  toBuffer () {
+  toBuffer() {
     return this.header.slice(0, this.headerSize + this.getPayloadSize())
   }
 
-  writeBool (value: any) {
+  writeBool(value: any) {
     return this.writeInt(value ? 1 : 0)
   }
 
-  writeInt (value: any) {
+  writeInt(value: any) {
     return this.writeBytes(value, SIZE_INT32, Buffer.prototype.writeInt32LE)
   }
 
-  writeUInt32 (value: any) {
+  writeUInt32(value: any) {
     return this.writeBytes(value, SIZE_UINT32, Buffer.prototype.writeUInt32LE)
   }
 
-  writeInt64 () {
+  writeInt64() {
     throw new Error('Int64 not supported in the browser')
   }
 
-  writeUInt64 () {
+  writeUInt64() {
     throw new Error('UInt64 not supported in the browser')
   }
 
-  writeFloat (value: any) {
+  writeFloat(value: any) {
     return this.writeBytes(value, SIZE_FLOAT, Buffer.prototype.writeFloatLE)
   }
 
-  writeDouble (value: any) {
+  writeDouble(value: any) {
     return this.writeBytes(value, SIZE_DOUBLE, Buffer.prototype.writeDoubleLE)
   }
 
-  writeString (value: string) {
+  writeString(value: string) {
     var length = Buffer.byteLength(value, 'utf8')
     if (!this.writeInt(length)) {
       return false
@@ -186,15 +185,15 @@ export default class Pickle {
     return this.writeBytes(value, length)
   }
 
-  setPayloadSize (payloadSize: number) {
+  setPayloadSize(payloadSize: number) {
     return this.header.writeUInt32LE(payloadSize, 0)
   }
 
-  getPayloadSize () {
+  getPayloadSize() {
     return this.header.readUInt32LE(0)
   }
 
-  writeBytes (data: any, length: number, method?: Function) {
+  writeBytes(data: any, length: number, method?: Function) {
     var dataLength = alignInt(length, SIZE_UINT32)
     var newSize = this.writeOffset + dataLength
     if (newSize > this.capacityAfterHeader) {
@@ -202,6 +201,10 @@ export default class Pickle {
     }
     if (method != null) {
       method.call(this.header, data, this.headerSize + this.writeOffset)
+    } else if (data instanceof Uint8Array) {
+      for (var i = 0; i < dataLength; i++) {
+        this.header[this.headerSize + this.writeOffset + i] = data[i]
+      }
     } else {
       this.header.write(data, this.headerSize + this.writeOffset, length)
     }
@@ -212,9 +215,9 @@ export default class Pickle {
     return true
   }
 
-  resize (newCapacity: number) {
+  resize(newCapacity: number) {
     newCapacity = alignInt(newCapacity, PAYLOAD_UNIT)
-    this.header = Buffer.concat([this.header, new Buffer(newCapacity)])
+    this.header = Buffer.concat([this.header, Buffer.alloc(newCapacity)])
     this.capacityAfterHeader = newCapacity
   }
 }

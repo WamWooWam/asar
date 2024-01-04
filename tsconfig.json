@@ -1,13 +1,24 @@
 {
-  "include": [
-    "src/**/*"
-  ],
+  "compileOnSave": true,
   "compilerOptions": {
-    "lib": ["DOM", "ESNext"],
-    "allowSyntheticDefaultImports": true,
-    "declaration": true,
+    "module": "CommonJS",
+    "target": "ES2017",
+    "lib": [
+      "ES2022",
+      "es2022.sharedmemory",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "moduleResolution": "Node10",
     "sourceMap": true,
-    "module": "ESNext",
-    "emitDeclarationOnly": true
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strictNullChecks": true,
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "./dist"
   }
 }

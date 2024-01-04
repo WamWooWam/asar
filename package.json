@@ -1,9 +1,8 @@
 {
-  "name": "@banou/asar",
+  "name": "asar",
   "version": "0.0.9",
   "main": "dist/index.js",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "dev": "parcel --target browsert test/index.html",
     "dev2": "parcel watch --target nodet test/node.ts",
@@ -16,14 +15,9 @@
   "devDependencies": {
     "@types/node": "^16.9.2",
     "concurrently": "^6.2.1",
+    "filer": "workspace:filer",
     "nodemon": "^2.0.12",
-    "parcel": "^2.0.0-nightly.357",
-    "path-browserify": "^1.0.1",
-    "typescript": "^4.7.4"
-  },
-  "dependencies": {
-    "buffer": "^5.6.0",
-    "path": "^0.12.7"
+    "typescript": "^5.3.3"
   },
   "browsert": "dist/browser.html",
   "nodet": "dist/node.js",
@@ -44,5 +38,8 @@
       "isLibrary": true,
       "outputFormat": "esmodule"
     }
+  },
+  "dependencies": {
+    "@msgpack/msgpack": "3.0.0-beta2"
   }
 }
